@@ -37,6 +37,7 @@ training_op = optimizer.minimize(mse)
 #training_op = tf.assign(theta, theta - learning_rate * gradients) # manual optimization
 
 init = tf.global_variables_initializer()
+saver = tf.train.Saver()
 
 with tf.Session() as sess:
   sess.run(init)
@@ -50,6 +51,7 @@ with tf.Session() as sess:
         print("Epoch", epoch, "MSE =", mse.eval(feed_dict = feed_dict))
       sess.run(training_op, feed_dict = feed_dict)
 
+  saver.save(sess, "/tmp/linear_regression_model.ckpt")
   best_theta = theta.eval()
 
 print(best_theta)
