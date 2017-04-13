@@ -17,9 +17,14 @@ theta = tf.Variable(tf.random_uniform([n + 1, 1], -1.0, 1.0, seed=42), name="the
 y_pred = tf.matmul(X, theta, name="predictions")
 error = y_pred - y
 mse = tf.reduce_mean(tf.square(error), name="mse")
-gradients = 2.0/m * tf.matmul(tf.transpose(X), error) # manual gradient computation
-#gradients = tf.gradients(mse, [theta])[0] # autodiff
-training_op = tf.assign(theta, theta - learning_rate * gradients)
+
+#gradients = 2.0/m * tf.matmul(tf.transpose(X), error) # manual gradient computation
+gradients = tf.gradients(mse, [theta])[0] # autodiff
+
+#optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=0.9)
+training_op = optimizer.minimize(mse)
+#training_op = tf.assign(theta, theta - learning_rate * gradients) # manual optimization
 
 init = tf.global_variables_initializer()
 
