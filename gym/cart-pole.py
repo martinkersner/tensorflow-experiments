@@ -1,11 +1,11 @@
 #/usr/bin/env python
 
+import numpy as np
 import gym
 
-#env = gym.make("CartPole-v0")
+env = gym.make("CartPole-v0")
 #obs = env.reset()
 #print(obs)
-## env.render()
 #action = 1
 #obs, reward, done, info = env.step(action)
 
@@ -64,4 +64,47 @@ for grad, variable, in grads_and_vars:
 training_op = optimizer.apply_gradients(grads_and_vars_feed)
 
 init = tf.global_variables_initializer()
-saver= tf.train.Saver()
+saver = tf.train.Saver()
+
+n_iterations = 250
+n_max_steps = 1000
+n_games_per_update = 10
+save_iterations = 10
+discount_rate = 0.95
+
+with tf.Session() as sess:
+  init.run()
+  for iteration in range(n_iterations):
+    all_rewards = []
+    all_gradients = []
+
+    for game in range(n_games_per_update):
+      current_rewards = []
+      current_gradients = []
+      obs = env.reset()
+
+      for step in range(n_max_steps):
+        action_val, gradients_val = sess.run([action, gradients], feed_dict={X: obs.reshape(1, n_inputs)})
+        obs, reward, done, info = env.step(action_val[0][0])
+        current_rewards.append(reward)
+        current_gradients.append(gradients_val)
+
+        if done:
+          break;
+
+      all_rewards.append(current_rewards)
+      all_gradients.append(current_gradients)
+
+    all_rewards = discount_and_normalize_rewards(all_rewards, discount_rate)
+    feed_dict = {}
+    for var_index, gradient_placeholder in enumerate(gradient_placeholders):
+      mean_gradients = np.mean([reward * all_gradients[game_index][step][var_index]
+          for game_index, rewards in enumerate(all_rewards)
+          for step, reward in enumerate(rewards)], axis=0)
+
+      feed_dict[gradient_placeholder] = mean_gradients
+
+    sess.run(training_op, feed_dict=feed_dict)
+
+    if iteration % save_iterations == 0:
+      saver.save(sess, "./my_policy_net_pg.ckpt")
