@@ -1,13 +1,11 @@
 #/usr/bin/env python
 
 import numpy as np
+import tensorflow as tf
+from tensorflow.contrib.layers import fully_connected
 import gym
 
 env = gym.make("CartPole-v0")
-#obs = env.reset()
-#print(obs)
-#action = 1
-#obs, reward, done, info = env.step(action)
 
 def discount_rewards(rewards, discount_rate):
   discounted_rewards = np.empty(len(rewards))
@@ -27,9 +25,6 @@ def discount_and_normalize_rewards(all_rewards, discount_rate):
 
   return [(discounted_rewards - reward_mean)/reward_std for discounted_rewards in all_discounted_rewards]
 
-import tensorflow as tf
-from tensorflow.contrib.layers import fully_connected
-
 n_inputs  = 4
 n_hidden  = 4
 n_outputs = 1
@@ -47,7 +42,7 @@ y = 1.0 - tf.to_float(action)
 
 learning_rate = 0.01
 
-cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=y, logits=logits)
+cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels=y, logits=logits) # !!!
 
 optimizer = tf.train.AdamOptimizer(learning_rate)
 grads_and_vars = optimizer.compute_gradients(cross_entropy)
@@ -75,6 +70,7 @@ discount_rate = 0.95
 with tf.Session() as sess:
   init.run()
   for iteration in range(n_iterations):
+    print("iteration: " + str(iteration))
     all_rewards = []
     all_gradients = []
 
